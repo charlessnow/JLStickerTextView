@@ -9,6 +9,7 @@
 import UIKit
 
 public class JLStickerLabelView: UIView {
+    var offset: CGSize!
     //MARK: -
     //MARK: Gestures
     
@@ -293,7 +294,7 @@ extension JLStickerLabelView: UIGestureRecognizerDelegate, adjustFontSizeToFillR
             }
         }
     }
-    
+
     @objc func moveGesture(_ recognizer: UIPanGestureRecognizer) {
         if !isShowingEditingHandles {
             self.showEditingHandles()
@@ -302,23 +303,30 @@ extension JLStickerLabelView: UIGestureRecognizerDelegate, adjustFontSizeToFillR
                 delegate.labelViewDidSelected!(self)
             }
         }
+
+//        let transP: CGPoint = recognizer.translation(in: superview)
+//
+//        // 移动图片控件
+//        self.transform = self.transform.translatedBy(x: transP.x, y: transP.y)
+//
+//        // 复位,表示相对上一次
+//        recognizer.setTranslation(CGPoint.zero, in: superview)
+//
+//        self.touchLocation = recognizer.location(in: self.superview)
         
-        //        let transP: CGPoint = recognizer.translation(in: superview)
-        //
-        //        // 移动图片控件
-        //        self.transform = self.transform.translatedBy(x: transP.x, y: transP.y)
-        //
-        //        // 复位,表示相对上一次
-        //        recognizer.setTranslation(CGPoint.zero, in: superview)
-        
-        self.touchLocation = recognizer.location(in: self.superview)
-        
+        self.touchLocation = recognizer.location(in: recognizer.view?.superview)
+        guard let view = recognizer.view else {
+            return
+        }
         switch recognizer.state {
         case .began:
-            beginningPoint = touchLocation
-            beginningCenter = self.center
+//            beginningPoint = touchLocation
+//            beginningCenter = self.center
             
-            self.center = self.estimatedCenter()
+//            self.center = self.estimatedCenter()
+            
+            offset = CGSize(width: view.center.x - self.touchLocation!.x, height: view.center.y - self.touchLocation!.y)
+            // 偏移值 + location值即可做到跟随移动
             beginBounds = self.bounds
             
             if let delegate: JLStickerLabelViewDelegate = delegate {
@@ -326,15 +334,15 @@ extension JLStickerLabelView: UIGestureRecognizerDelegate, adjustFontSizeToFillR
             }
             
         case .changed:
-            self.center = self.estimatedCenter()
-            
+//            self.center = self.estimatedCenter()
+            center = CGPoint(x: offset.width + touchLocation!.x, y: offset.height + touchLocation!.y)
             
             if let delegate: JLStickerLabelViewDelegate = delegate {
                 delegate.labelViewDidChangeEditing!(self)
             }
             
         case .ended:
-            self.center = self.estimatedCenter()
+//            self.center = self.estimatedCenter()
             
             
             if let delegate: JLStickerLabelViewDelegate = delegate {
