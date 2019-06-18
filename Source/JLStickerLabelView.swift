@@ -303,6 +303,14 @@ extension JLStickerLabelView: UIGestureRecognizerDelegate, adjustFontSizeToFillR
             }
         }
         
+        //        let transP: CGPoint = recognizer.translation(in: superview)
+        //
+        //        // 移动图片控件
+        //        self.transform = self.transform.translatedBy(x: transP.x, y: transP.y)
+        //
+        //        // 复位,表示相对上一次
+        //        recognizer.setTranslation(CGPoint.zero, in: superview)
+        
         self.touchLocation = recognizer.location(in: self.superview)
         
         switch recognizer.state {
