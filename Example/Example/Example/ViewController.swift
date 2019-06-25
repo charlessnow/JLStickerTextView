@@ -53,11 +53,11 @@ class ViewController: UIViewController {
         //Modify the Label
         stickerView.textColor = UIColor.white
         stickerView.textAlpha = 1
-        stickerView.currentlyEditingLabel.closeView!.image = UIImage(named: "cancel")
-        stickerView.currentlyEditingLabel.rotateView?.image = UIImage(named: "rotate-option")
-        stickerView.currentlyEditingLabel.border?.strokeColor = UIColor.white.cgColor
-        stickerView.currentlyEditingLabel.labelTextView?.font = UIFont.systemFont(ofSize: 14.0)
-        stickerView.currentlyEditingLabel.labelTextView?.becomeFirstResponder()
+        stickerView.currentlyEditingLabel?.closeView!.image = UIImage(named: "cancel")
+        stickerView.currentlyEditingLabel?.rotateView?.image = UIImage(named: "rotate-option")
+        stickerView.currentlyEditingLabel?.border?.strokeColor = UIColor.white.cgColor
+        stickerView.currentlyEditingLabel?.labelTextView?.font = UIFont.systemFont(ofSize: 14.0)
+        stickerView.currentlyEditingLabel?.labelTextView?.becomeFirstResponder()
     }
     
     @IBAction func onRefreshShadow(_ sender: UIBarButtonItem) {
