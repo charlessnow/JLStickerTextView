@@ -9,121 +9,139 @@
 import UIKit
 
 public class JLStickerImageView: UIImageView, UIGestureRecognizerDelegate {
-    public var currentlyEditingLabel: JLStickerLabelView!
-    fileprivate var labels: [JLStickerLabelView]!
+    public var currentlyEditingLabel: JLStickerLabelView?
+    public var labels: [JLStickerLabelView] = []
     private var renderedView: UIView!
+    public var isEditing: Bool {
+        guard let current = currentlyEditingLabel else { return false}
+        return labels.contains(current)
+    }
     
-    fileprivate lazy var tapOutsideGestureRecognizer: UITapGestureRecognizer! = {
+    fileprivate lazy var tapOutsideGestureRecognizer: UITapGestureRecognizer = {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(JLStickerImageView.tapOutside))
         tapGesture.delegate = self
         return tapGesture
-        
+
     }()
-    
-    //MARK: -
-    //MARK: init
-    
+
+    // MARK: -
+
+    // MARK: init
+
     init() {
         super.init(frame: CGRect.zero)
         isUserInteractionEnabled = true
-        labels = []
     }
-    
-    override init(frame: CGRect) {
+
+    public override init(frame: CGRect) {
         super.init(frame: frame)
         isUserInteractionEnabled = true
-        labels = []
     }
-    
-    required public init?(coder aDecoder: NSCoder) {
+
+    public required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         isUserInteractionEnabled = true
-        labels = []
     }
-    
 }
 
-//MARK: -
-//MARK: Functions
+// MARK: -
+
+// MARK: Functions
+
 extension JLStickerImageView {
-    
-    public func addLabel() {
+    public func addLabel(_ frame:CGRect? = nil,tag:Int? = nil) {
         if let label: JLStickerLabelView = currentlyEditingLabel {
             label.hideEditingHandlers()
         }
-        
-        let labelFrame = CGRect(x: self.bounds.midX - CGFloat(arc4random()).truncatingRemainder(dividingBy: 20),
-                                    y: self.bounds.midY - CGFloat(arc4random()).truncatingRemainder(dividingBy: 20),
-                                    width: 60, height: 50)
+
+        var frameX = bounds.midX - 50
+        var frameY = bounds.midY - 25
+        var frameWidth:CGFloat = 100
+        var frameHeight:CGFloat = 50
+        if let frame = frame {
+            frameX = frame.minX
+            frameY = frame.minY
+            frameWidth = frame.width
+            frameHeight = frame.height
+        }
+        let labelFrame = CGRect(x: frameX,
+                                y: frameY,
+                                width: frameWidth, height: frameHeight)
         let labelView = JLStickerLabelView(frame: labelFrame)
+        if let tag = tag {
+            labelView.tag = tag
+        }
         labelView.setupTextLabel()
         labelView.delegate = self
         labelView.showsContentShadow = false
         labelView.borderColor = UIColor.white
 //        labelView.labelTextView?.fontName = "Roboto-Medium"
-        self.addSubview(labelView)
+        addSubview(labelView)
         currentlyEditingLabel = labelView
         adjustsWidthToFillItsContens(currentlyEditingLabel)
         labels.append(labelView)
-        
-        self.addGestureRecognizer(tapOutsideGestureRecognizer)
+
+        addGestureRecognizer(tapOutsideGestureRecognizer)
     }
-    
-    public func addImage() {
+
+    public func addImage(tag:Int? = nil) {
         if let label: JLStickerLabelView = currentlyEditingLabel {
             label.hideEditingHandlers()
         }
-        
-        let labelFrame = CGRect(x: self.bounds.midX - CGFloat(arc4random()).truncatingRemainder(dividingBy: 20),
-                                y: self.bounds.midY - CGFloat(arc4random()).truncatingRemainder(dividingBy: 20),
-                                width: 60, height: 50)
+
+        let labelFrame = CGRect(x: bounds.midX - 50,
+                                y: bounds.midY - 50,
+                                width: 100, height: 100)
         let labelView = JLStickerLabelView(frame: labelFrame)
+        if let tag = tag {
+            labelView.tag = tag
+        }
         labelView.setupImageLabel()
         labelView.showsContentShadow = false
         labelView.borderColor = UIColor.white
-        self.addSubview(labelView)
+        labelView.delegate = self
+        addSubview(labelView)
         currentlyEditingLabel = labelView
         adjustsWidthToFillItsContens(currentlyEditingLabel)
         labels.append(labelView)
-        
-        self.addGestureRecognizer(tapOutsideGestureRecognizer)
+
+        addGestureRecognizer(tapOutsideGestureRecognizer)
     }
-    
+
     public func renderContentOnView() -> UIImage? {
-        
-        self.cleanup()
-        
-        UIGraphicsBeginImageContextWithOptions(self.bounds.size, true, 0)
-        
-        self.layer.render(in: UIGraphicsGetCurrentContext()!)
+        cleanup()
+
+        UIGraphicsBeginImageContextWithOptions(bounds.size, true, 0)
+
+        layer.render(in: UIGraphicsGetCurrentContext()!)
         let img = UIGraphicsGetImageFromCurrentImageContext()
-        
+
         UIGraphicsEndImageContext()
         return img
     }
-    
+
     public func limitImageViewToSuperView() {
-        if self.superview == nil {
+        if superview == nil {
             return
         }
         guard let imageSize = self.image?.size else {
             return
         }
-        self.translatesAutoresizingMaskIntoConstraints = true
+        translatesAutoresizingMaskIntoConstraints = true
         let aspectRatio = imageSize.width / imageSize.height
-        
+
         if imageSize.width > imageSize.height {
-            self.bounds.size.width = self.superview!.bounds.size.width
-            self.bounds.size.height = self.superview!.bounds.size.width / aspectRatio
-        }else {
-            self.bounds.size.height = self.superview!.bounds.size.height
-            self.bounds.size.width = self.superview!.bounds.size.height * aspectRatio
+            bounds.size.width = superview!.bounds.size.width
+            bounds.size.height = superview!.bounds.size.width / aspectRatio
+        } else {
+            bounds.size.height = superview!.bounds.size.height
+            bounds.size.width = superview!.bounds.size.height * aspectRatio
         }
     }
-    
+
     // MARK: -
-    
-    func cleanup() {
+
+    public func cleanup() {
         for label in labels {
             if let isEmpty = label.labelTextView?.text.isEmpty, isEmpty {
                 label.closeTap(nil)
@@ -134,202 +152,212 @@ extension JLStickerImageView {
     }
 }
 
-//MARK-
-//MARK: Gesture
+// MARK-
+
+// MARK: Gesture
+
 extension JLStickerImageView {
     @objc func tapOutside() {
-        if let _: JLStickerLabelView = currentlyEditingLabel {
-            currentlyEditingLabel.hideEditingHandlers()
-        }
-        
+        currentlyEditingLabel?.hideEditingHandlers()
     }
 }
 
-//MARK-
-//MARK: stickerViewDelegate
+// MARK-
+
+// MARK: stickerViewDelegate
+
 extension JLStickerImageView: JLStickerLabelViewDelegate {
-    public func labelViewDidBeginEditing(_ label: JLStickerLabelView) {
-        //labels.removeObject(label)
-        
+    public func labelViewDidBeginEditing(_: JLStickerLabelView) {
+        // labels.removeObject(label)
     }
-    
+
     public func labelViewDidClose(_ label: JLStickerLabelView) {
-        
+        currentlyEditingLabel = nil
+        labels.removeAll { $0 == label }
     }
-    
+
     public func labelViewDidShowEditingHandles(_ label: JLStickerLabelView) {
         currentlyEditingLabel = label
-        
     }
-    
-    public func labelViewDidHideEditingHandles(_ label: JLStickerLabelView) {
+
+    public func labelViewDidHideEditingHandles(_: JLStickerLabelView) {
         currentlyEditingLabel = nil
-        
     }
-    
+
     public func labelViewDidStartEditing(_ label: JLStickerLabelView) {
         currentlyEditingLabel = label
-        
     }
-    
-    public func labelViewDidChangeEditing(_ label: JLStickerLabelView) {
-        
-    }
-    
-    public func labelViewDidEndEditing(_ label: JLStickerLabelView) {
-        
-        
-    }
-    
+
+    public func labelViewDidChangeEditing(_: JLStickerLabelView) {}
+
+    public func labelViewDidEndEditing(_: JLStickerLabelView) {}
+
     public func labelViewDidSelected(_ label: JLStickerLabelView) {
         for labelItem in labels {
             labelItem.hideEditingHandlers()
         }
         label.showEditingHandles()
     }
-    
 }
 
-//MARK: -
-//MARK: Set propeties
+// MARK: -
+
+// MARK: Set propeties
 
 extension JLStickerImageView: adjustFontSizeToFillRectProtocol {
     
-    public enum textShadowPropterties {
+    public enum TextShadowPropterties {
         case offSet(CGSize)
         case color(UIColor)
         case blurRadius(CGFloat)
     }
-    
+
     public var fontName: String! {
         set {
-            if self.currentlyEditingLabel != nil {
-                self.currentlyEditingLabel.labelTextView?.fontName = newValue
+            if currentlyEditingLabel != nil {
+                currentlyEditingLabel?.labelTextView?.fontName = newValue
                 adjustsWidthToFillItsContens(currentlyEditingLabel)
             }
         }
         get {
-            return self.currentlyEditingLabel.labelTextView?.fontName
+            return currentlyEditingLabel?.labelTextView?.fontName
         }
     }
-    
+
     public var textColor: UIColor! {
         set {
-            if self.currentlyEditingLabel != nil {
-                self.currentlyEditingLabel.labelTextView?.foregroundColor = newValue
+            if currentlyEditingLabel != nil {
+                currentlyEditingLabel?.labelTextView?.foregroundColor = newValue
             }
         }
         get {
-            return self.currentlyEditingLabel.labelTextView?.foregroundColor
+            return currentlyEditingLabel?.labelTextView?.foregroundColor
         }
     }
     
-    public var textAlpha: CGFloat! {
+    public var text: String! {
         set {
-            if self.currentlyEditingLabel != nil {
-                self.currentlyEditingLabel.labelTextView?.textAlpha = newValue
-            }
-            
-        }
-        get {
-            return self.currentlyEditingLabel.labelTextView?.textAlpha
-        }
-    }
-    
-    //MARK: -
-    //MARK: text Format
-    
-    public var textAlignment: NSTextAlignment! {
-        set {
-            if self.currentlyEditingLabel != nil {
-                self.currentlyEditingLabel.labelTextView?.alignment = newValue
-            }
-            
-        }
-        get {
-            return self.currentlyEditingLabel.labelTextView?.alignment
-        }
-    }
-    
-    public var lineSpacing: CGFloat! {
-        set {
-            if self.currentlyEditingLabel != nil {
-                self.currentlyEditingLabel.labelTextView?.lineSpacing = newValue
+            if currentlyEditingLabel != nil {
+                currentlyEditingLabel?.labelTextView?.text = newValue
                 adjustsWidthToFillItsContens(currentlyEditingLabel)
             }
-            
         }
         get {
-            return self.currentlyEditingLabel.labelTextView?.lineSpacing
-            
+            return currentlyEditingLabel?.labelTextView?.text
         }
     }
     
-    //MARK: -
-    //MARK: text Background
-    
+    public var font: UIFont! {
+        set {
+            if currentlyEditingLabel != nil {
+                currentlyEditingLabel?.labelTextView?.font = newValue
+                adjustsWidthToFillItsContens(currentlyEditingLabel)
+            }
+        }
+        get {
+            return currentlyEditingLabel?.labelTextView?.font
+        }
+    }
+
+    public var textAlpha: CGFloat! {
+        set {
+            if currentlyEditingLabel != nil {
+                currentlyEditingLabel?.labelTextView?.textAlpha = newValue
+            }
+        }
+        get {
+            return currentlyEditingLabel?.labelTextView?.textAlpha
+        }
+    }
+
+    // MARK: -
+
+    // MARK: text Format
+
+    public var textAlignment: NSTextAlignment! {
+        set {
+            if currentlyEditingLabel != nil {
+                currentlyEditingLabel?.labelTextView?.alignment = newValue
+            }
+        }
+        get {
+            return currentlyEditingLabel?.labelTextView?.alignment
+        }
+    }
+
+    public var lineSpacing: CGFloat! {
+        set {
+            if currentlyEditingLabel != nil {
+                currentlyEditingLabel?.labelTextView?.lineSpacing = newValue
+                adjustsWidthToFillItsContens(currentlyEditingLabel)
+            }
+        }
+        get {
+            return currentlyEditingLabel?.labelTextView?.lineSpacing
+        }
+    }
+
+    // MARK: -
+
+    // MARK: text Background
+
     public var textBackgroundColor: UIColor! {
         set {
-            if self.currentlyEditingLabel != nil {
-                self.currentlyEditingLabel.labelTextView?.textBackgroundColor = newValue
+            if currentlyEditingLabel != nil {
+                currentlyEditingLabel?.labelTextView?.textBackgroundColor = newValue
             }
-            
         }
-        
+
         get {
-            return self.currentlyEditingLabel.labelTextView?.textBackgroundColor
+            return currentlyEditingLabel?.labelTextView?.textBackgroundColor
         }
     }
-    
+
     public var textBackgroundAlpha: CGFloat! {
         set {
-            if self.currentlyEditingLabel != nil {
-                self.currentlyEditingLabel.labelTextView?.textBackgroundAlpha = newValue
+            if currentlyEditingLabel != nil {
+                currentlyEditingLabel?.labelTextView?.textBackgroundAlpha = newValue
             }
-            
         }
         get {
-            return self.currentlyEditingLabel.labelTextView?.textBackgroundAlpha
-            
+            return currentlyEditingLabel?.labelTextView?.textBackgroundAlpha
         }
     }
-    
-    //MARK: -
-    //MARK: text shadow
-    
+
+    // MARK: -
+
+    // MARK: text shadow
+
     public var textShadowOffset: CGSize! {
         set {
-            if self.currentlyEditingLabel != nil {
-                self.currentlyEditingLabel.labelTextView?.textShadowOffset = newValue
+            if currentlyEditingLabel != nil {
+                currentlyEditingLabel?.labelTextView?.textShadowOffset = newValue
             }
-            
         }
         get {
-            return self.currentlyEditingLabel.labelTextView?.shadow?.shadowOffset
+            return currentlyEditingLabel?.labelTextView?.shadow?.shadowOffset
         }
     }
-    
+
     public var textShadowColor: UIColor! {
         set {
-            if self.currentlyEditingLabel != nil {
-                self.currentlyEditingLabel.labelTextView?.textShadowColor = newValue
+            if currentlyEditingLabel != nil {
+                currentlyEditingLabel?.labelTextView?.textShadowColor = newValue
             }
-            
         }
         get {
-            return (self.currentlyEditingLabel.labelTextView?.shadow?.shadowColor) as? UIColor
+            return (currentlyEditingLabel?.labelTextView?.shadow?.shadowColor) as? UIColor
         }
     }
-    
+
     public var textShadowBlur: CGFloat! {
         set {
-            if self.currentlyEditingLabel != nil {
-                self.currentlyEditingLabel.labelTextView?.textShadowBlur = newValue
+            if currentlyEditingLabel != nil {
+                currentlyEditingLabel?.labelTextView?.textShadowBlur = newValue
             }
-            
         }
         get {
-            return self.currentlyEditingLabel.labelTextView?.shadow?.shadowBlurRadius
+            return currentlyEditingLabel?.labelTextView?.shadow?.shadowBlurRadius
         }
     }
 }
