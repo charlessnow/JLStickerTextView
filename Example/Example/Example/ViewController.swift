@@ -58,6 +58,7 @@ class ViewController: UIViewController {
         stickerView.currentlyEditingLabel?.border?.strokeColor = UIColor.white.cgColor
         stickerView.currentlyEditingLabel?.labelTextView?.font = UIFont.systemFont(ofSize: 14.0)
         stickerView.currentlyEditingLabel?.labelTextView?.becomeFirstResponder()
+        stickerView.currentlyEditingLabel?.maxStringCount = 10
     }
     
     @IBAction func onRefreshShadow(_ sender: UIBarButtonItem) {

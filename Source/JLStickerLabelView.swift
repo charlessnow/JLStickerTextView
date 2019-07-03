@@ -10,6 +10,7 @@ import UIKit
 
 public class JLStickerLabelView: UIView {
     var offset: CGSize!
+
     //MARK: -
     //MARK: Gestures
     
@@ -70,6 +71,8 @@ public class JLStickerLabelView: UIView {
             border?.strokeColor = borderColor?.cgColor
         }
     }
+    
+    public var maxStringCount = INTMAX_MAX 
     
     
     //MARK: -
@@ -244,21 +247,69 @@ extension JLStickerLabelView: UITextViewDelegate {
         if (!isShowingEditingHandles) {
             self.showEditingHandles()
         }
-        //if textView.text != "" {
-        //adjustsWidthToFillItsContens(self, labelView: labelTextView)
-        //}
+        if let selectedRange = textView.markedTextRange {
+            
+            let position = textView.position(from: selectedRange.start, offset: 0)
+            if  position != nil {
+                let startOffset = textView.offset(from: textView.beginningOfDocument, to: selectedRange.start)
+                let endOffset = textView.offset(from: textView.beginningOfDocument, to: selectedRange.end)
+                let offsetRange = NSMakeRange(startOffset, endOffset - startOffset)
+                if (offsetRange.location < maxStringCount) {
+                    return true
+                }else{
+                    return false
+                }
+            }
+        }
         
-        return true
+        let contents = ((textView.text) as NSString).replacingCharacters(in: range, with: text)
+        let canInputLen = Int(maxStringCount) - contents.count
+        if canInputLen >= 0
+        {
+            labelTextView!.attributedText =   NSAttributedString(string: textView.text, attributes: labelTextView!.textAttributes)
+            return true
+        }
+        else
+        {
+            let len = text.count + canInputLen
+            //            //防止当text.length + caninputlen < 0时，使得rg.length为一个非法最大正数出错
+            let rang = NSRange(location: 0, length: max(len, 0))
+            if (rang.length > 0) {
+                let s = (text as NSString).substring(with: rang)
+                //                //超出限制，截取最大长度的内容
+                let str = (textView.text as NSString).replacingCharacters(in: range, with: s)
+                labelTextView!.attributedText =   NSAttributedString(string: str, attributes: labelTextView!.textAttributes)
+                adjustsWidthToFillItsContens(self)
+            }
+            return false
+        }
     }
     
     public func textViewDidChange(_ textView: UITextView) {
-        if textView.text != "" {
+        if !textView.text.isEmpty {
             if labelTextView != nil {
                 adjustsWidthToFillItsContens(self)
-                 labelTextView!.attributedText = NSAttributedString(string: labelTextView!.text, attributes: labelTextView!.textAttributes)
+                if let selectedRange = textView.markedTextRange {
+                    let position = textView.position(from: selectedRange.start, offset: 0)
+                    if  position != nil {
+                        return
+                    }
+                }
+                
+                //如果在变化中是高亮部分在变，就不要计算字符了
+                let textContent = textView.text as NSString
+                let existTextNum = textContent.length
+                
+                if (existTextNum > maxStringCount) {
+                    //截取到最大位置的字符
+                    let s = textContent.substring(to: Int(maxStringCount))
+                    labelTextView!.attributedText =   NSAttributedString(string: s, attributes: labelTextView!.textAttributes)
+                } else {
+                    labelTextView!.attributedText =   NSAttributedString(string: textView.text, attributes: labelTextView!.textAttributes)
+                }
+                
+                adjustsWidthToFillItsContens(self)
             }
-
-            
         }
     }
 }
