@@ -38,6 +38,12 @@ public class JLStickerLabelView: UIView {
         return panRecognizer
     }()
     
+    fileprivate lazy var pinchRotateGesture: UIPinchGestureRecognizer! = {
+        let pinchRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(JLStickerLabelView.pinchViewPanGesture(_:)))
+        pinchRecognizer.delegate = self
+        return pinchRecognizer
+    }()
+    
     //MARK: -
     //MARK: properties
     
@@ -170,6 +176,7 @@ public class JLStickerLabelView: UIView {
         
         self.addGestureRecognizer(moveGestureRecognizer)
         self.addGestureRecognizer(singleTapShowHide)
+        self.addGestureRecognizer(pinchRotateGesture)
         self.moveGestureRecognizer.require(toFail: closeTap)
         
         self.closeView!.addGestureRecognizer(closeTap)
@@ -402,6 +409,51 @@ extension JLStickerLabelView: UIGestureRecognizerDelegate, adjustFontSizeToFillR
             
         default:break
             
+        }
+    }
+    
+    @objc func pinchViewPanGesture(_ recognizer: UIPinchGestureRecognizer) {
+        
+        let scale = recognizer.scale
+        
+        switch recognizer.state {
+        case .began:
+            initialBounds = bounds
+        case .changed:
+            let scaleRect = CalculateFunctions.CGRectScale(initialBounds!, wScale: CGFloat(scale), hScale: CGFloat(scale))
+            debugPrint(scaleRect)
+            if scaleRect.size.width >= (1 + (globalInset ?? 0) * 4), scaleRect.size.height >= (1 + (globalInset ?? 0) * 4), (labelTextView?.text != "" || imageView?.image != nil) {
+                //  if fontSize < 100 || CGRectGetWidth(scaleRect) < CGRectGetWidth(self.bounds) {
+                if labelTextView?.text != nil, scale < 1, (labelTextView?.fontSize ?? 0) <= 9 {
+                    
+                } else {
+                    let bHeight:CGFloat = UniversalDefine.isPad ? 66 : 44
+                    let width =  (((UIScreen.main.bounds.size.height - (UIScreen.main.bounds.size.height*2/7 - 34 + bHeight) - 4))  * 9 / 14) - 40
+                    
+                    if imageView?.image != nil && scaleRect.size.width < 100 {
+                        bounds = CGRect(x: 0, y: 0, width: 100, height: 100)
+                        return
+                    }
+                    
+                    if imageView?.image != nil && (scaleRect.size.width >= width || scaleRect.size.height >= width) {
+                        bounds = CGRect(x: 0, y: 0, width:  width , height: width )
+                        return
+                    }
+                    
+                    if imageView?.image != nil && scaleRect.size.width > UIScreen.main.bounds.size.width {
+                        bounds = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.size.width, height: UIScreen.main.bounds.size.width)
+                        return
+                    }
+                    adjustFontSizeToFillRect(scaleRect, view: self)
+                    bounds = scaleRect
+                    adjustsWidthToFillItsContens(self)
+                    refresh()
+                }
+            }
+        case .ended:
+            break
+        @unknown default:
+            break
         }
     }
     

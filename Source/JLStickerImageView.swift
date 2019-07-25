@@ -8,6 +8,10 @@
 
 import UIKit
 
+struct UniversalDefine {
+    static let isPad = UIDevice.current.userInterfaceIdiom == .pad ? true : false
+}
+
 public class JLStickerImageView: UIImageView, UIGestureRecognizerDelegate {
     public var currentlyEditingLabel: JLStickerLabelView?
     public var labels: [JLStickerLabelView] = []
