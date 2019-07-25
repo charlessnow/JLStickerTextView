@@ -475,27 +475,70 @@ extension JLStickerLabelView: UIGestureRecognizerDelegate, adjustFontSizeToFillR
             }
             
         case .changed:
+         
             let ang = atan2(touchLocation!.y - center.y, touchLocation!.x - center.x)
             
             let angleDiff = deltaAngle! - ang
-            self.transform = CGAffineTransform(rotationAngle: -angleDiff)
-            self.layoutIfNeeded()
-            
-            //Finding scale between current touchPoint and previous touchPoint
+            transform = CGAffineTransform(rotationAngle: -angleDiff)
+            layoutIfNeeded()
+            // Finding scale between current touchPoint and previous touchPoint
             let scale = sqrtf(Float(CalculateFunctions.CGpointGetDistance(center, point2: touchLocation!)) / Float(initialDistance!))
             let scaleRect = CalculateFunctions.CGRectScale(initialBounds!, wScale: CGFloat(scale), hScale: CGFloat(scale))
             
-            if scaleRect.size.width >= (1 + globalInset! * 2) && scaleRect.size.height >= (1 + globalInset! * 2) && self.labelTextView?.text != "" {
+            //            print("bounds\(bounds)")
+            //            print("ang\(ang)")
+            //            print("angleDiff\(angleDiff)")
+            //            print("scale\(scale)")
+            //            print("scaleRect\(scaleRect)\n")
+            
+            if scaleRect.size.width >= (1 + (globalInset ?? 0) * 4), scaleRect.size.height >= (1 + (globalInset ?? 0) * 4), (labelTextView?.text != "" || imageView?.image != nil) {
                 //  if fontSize < 100 || CGRectGetWidth(scaleRect) < CGRectGetWidth(self.bounds) {
-                if scale < 1 && (labelTextView?.fontSize ?? 0) <= 9 {
+                if labelTextView?.text != nil, scale < 1, (labelTextView?.fontSize ?? 0) <= 9 {} else {
+                    let bHeight:CGFloat = UniversalDefine.isPad ? 66 : 44
+                    let width =  (((UIScreen.main.bounds.size.height - (UIScreen.main.bounds.size.height*2/7 - 34 + bHeight) - 4))  * 9 / 14) - 40
                     
-                }else {
-                    self.adjustFontSizeToFillRect(scaleRect, view: self)
-                    self.bounds = scaleRect
-                    self.adjustsWidthToFillItsContens(self)
-                    self.refresh()
+                    if imageView?.image != nil && scaleRect.size.width < 100 {
+                        bounds = CGRect(x: 0, y: 0, width: 100, height: 100)
+                        return
+                    }
+                    
+                    if imageView?.image != nil && (scaleRect.size.width >= width || scaleRect.size.height >= width) {
+                        bounds = CGRect(x: 0, y: 0, width:  width , height: width )
+                        return
+                    }
+                    
+                    if imageView?.image != nil && scaleRect.size.width > UIScreen.main.bounds.size.width {
+                        bounds = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.size.width, height: UIScreen.main.bounds.size.width)
+                        return
+                    }
+                    adjustFontSizeToFillRect(scaleRect, view: self)
+                    bounds = scaleRect
+                    adjustsWidthToFillItsContens(self)
+                    refresh()
                 }
             }
+            
+//            let ang = atan2(touchLocation!.y - center.y, touchLocation!.x - center.x)
+//
+//            let angleDiff = deltaAngle! - ang
+//            self.transform = CGAffineTransform(rotationAngle: -angleDiff)
+//            self.layoutIfNeeded()
+//
+//            //Finding scale between current touchPoint and previous touchPoint
+//            let scale = sqrtf(Float(CalculateFunctions.CGpointGetDistance(center, point2: touchLocation!)) / Float(initialDistance!))
+//            let scaleRect = CalculateFunctions.CGRectScale(initialBounds!, wScale: CGFloat(scale), hScale: CGFloat(scale))
+//
+//            if scaleRect.size.width >= (1 + globalInset! * 2) && scaleRect.size.height >= (1 + globalInset! * 2) && self.labelTextView?.text != "" {
+//                //  if fontSize < 100 || CGRectGetWidth(scaleRect) < CGRectGetWidth(self.bounds) {
+//                if scale < 1 && (labelTextView?.fontSize ?? 0) <= 9 {
+//
+//                }else {
+//                    self.adjustFontSizeToFillRect(scaleRect, view: self)
+//                    self.bounds = scaleRect
+//                    self.adjustsWidthToFillItsContens(self)
+//                    self.refresh()
+//                }
+//            }
             
             if let delegate: JLStickerLabelViewDelegate = delegate {
                 if delegate.responds(to: #selector(JLStickerLabelViewDelegate.labelViewDidChangeEditing(_:))) {
